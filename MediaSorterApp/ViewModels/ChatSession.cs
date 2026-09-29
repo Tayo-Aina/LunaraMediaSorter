@@ -852,6 +852,18 @@ public sealed class ChatSession
                 _vm.Add($"Include subfolders: {(_vm.IncludeSubfolders ? "on" : "off")}", ChatRole.System);
                 return true;
 
+            case "/support":
+                if (!_vm.HasSupport)
+                {
+                    _vm.Add("Support details aren't available in this copy of the app.", ChatRole.System);
+                    return true;
+                }
+
+                _vm.ShowSupport = !_vm.ShowSupport;
+                if (!_vm.ShowSupport)
+                    _vm.Add("Support section hidden.", ChatRole.System);
+                return true;
+
             default:
                 _vm.Add($"Unknown command \"{parts[0]}\". Type /help for the list.", ChatRole.Error);
                 return true;
@@ -889,6 +901,7 @@ public sealed class ChatSession
             "  /undo              revert the last batch of moves\n" +
             "  /move | /copy      choose whether files are moved or copied\n" +
             "  /subfolders        toggle scanning of nested folders\n" +
+            "  /support           show or hide the support section\n" +
             "  /seasons 5         create Season 01…05 for the current show\n" +
             "  /seasons 3,6,9     create only those seasons\n" +
             "  /seasons 5 only    create only Season 05\n" +

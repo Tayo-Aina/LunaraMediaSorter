@@ -150,6 +150,35 @@ public partial class MainWindow : Window
         _vm.SendCommand.Execute(null);
     }
 
+    // --------------------------------------------------------------- support
+
+    /// <summary>Copy button inside the support section (copies the bank number).</summary>
+    private void OnCopyAccountNumber(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string number || number.Length == 0)
+            return;
+
+        try
+        {
+            Clipboard.SetText(number);
+        }
+        catch
+        {
+            // Clipboard can be busy for a moment; nothing useful to tell the user.
+            return;
+        }
+
+        // Brief "Copied" confirmation on the button itself.
+        button.Content = "Copied";
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.6) };
+        timer.Tick += (_, _) =>
+        {
+            button.Content = "Copy number";
+            timer.Stop();
+        };
+        timer.Start();
+    }
+
     // ------------------------------------------------------------- drag & drop
 
     private void OnDragOver(object sender, DragEventArgs e)

@@ -36,6 +36,7 @@ internal static class Program
         TestPlannerAndExecutor();
         TestScanner();
         TestSelection();
+        TestSupportInfo();
 
         Console.WriteLine();
         Console.WriteLine($"passed: {_passed}, failed: {Failures.Count}");
@@ -602,6 +603,85 @@ internal static class Program
     }
 
     private static ParseResult Parse(string path) => EpisodeParser.Parse(path);
+
+    // ---------------------------------------------------------------- support
+
+    private static void TestSupportInfo()
+    {
+        Console.WriteLine("SupportInfo");
+
+        // The shipped payload decodes and verifies.
+        var data = SupportInfo.Load();
+        Check(data is not null, "shipping payload decodes and passes its seal");
+        if (data is null)
+            return;
+
+        Eq("Lunara", data.AccountName, "account name is Lunara");
+        Eq(2, data.Banks.Count, "both banks are present");
+
+        var byBank = data.Banks.ToDictionary(b => b.Bank, b => b.Number);
+        Check(byBank.ContainsKey("Providus Bank") && byBank.ContainsKey("Access Bank"),
+            "banks are Providus and Access", string.Join(", ", byBank.Keys));
+        Eq("6505889999", byBank.GetValueOrDefault("Providus Bank", ""), "Providus account number");
+        Eq("1698996910", byBank.GetValueOrDefault("Access Bank", ""), "Access account number");
+
+        foreach (var bank in data.Banks)
+            Check(bank.Number.Length is 10 or 11 && bank.Number.All(char.IsDigit),
+                $"{bank.Bank} number looks like an account number", bank.Number);
+
+        // Tampered payload: one character flipped in the base64 blob must fail the seal.
+        var payload = SupportInfo.Payload;
+        var flipped = payload[..^1] + (payload[^1] == 'A' ? 'B' : 'A');
+        Check(SupportInfo.Decode(flipped, SupportInfo.Seal, SupportInfo.ScrambleKey) is null,
+            "tampered payload fails the seal");
+
+        // Attacker swaps in their own payload: without the right seal it is rejected.
+        var attackerPlain = "Evil Corp\nEvil Bank|9999999999";
+        var attackerBytes = System.Text.Encoding.UTF8.GetBytes(attackerPlain);
+        var keyBytes = System.Text.Encoding.UTF8.GetBytes(SupportInfo.ScrambleKey);
+        var attackerScrambled = new byte[attackerBytes.Length];
+        for (var i = 0; i < attackerBytes.Length; i++)
+            attackerScrambled[i] = (byte)(attackerBytes[i] ^ keyBytes[i % keyBytes.Length]);
+        var attackerPayload = Convert.ToBase64String(attackerScrambled);
+
+        Check(SupportInfo.Decode(attackerPayload, SupportInfo.Seal, SupportInfo.ScrambleKey) is null,
+            "attacker's own account number is rejected against the real seal");
+
+        // Right payload, wrong seal: also rejected.
+        Check(SupportInfo.Decode(SupportInfo.Payload, Convert.ToBase64String(new byte[32]), SupportInfo.ScrambleKey) is null,
+            "wrong seal is rejected");
+
+        // Right blob, wrong scramble key: garbage never renders.
+        Check(SupportInfo.Decode(SupportInfo.Payload, SupportInfo.Seal, "some other key") is null,
+            "wrong scramble key is rejected");
+
+        // Malformed base64 fails closed instead of throwing.
+        Check(SupportInfo.Decode("not base64!!", SupportInfo.Seal, SupportInfo.ScrambleKey) is null,
+            "malformed payload fails closed");
+
+        // An account-shaped number with letters in it is dropped rather than shown.
+        var dirtyPlain = "Lunara\nProvidus Bank|65058899xx";
+        var dirtyBytes = System.Text.Encoding.UTF8.GetBytes(dirtyPlain);
+        var dirtyScrambled = new byte[dirtyBytes.Length];
+        for (var i = 0; i < dirtyBytes.Length; i++)
+            dirtyScrambled[i] = (byte)(dirtyBytes[i] ^ keyBytes[i % keyBytes.Length]);
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        var dirtySeal = Convert.ToBase64String(sha.ComputeHash(dirtyBytes));
+        Check(SupportInfo.Decode(Convert.ToBase64String(dirtyScrambled), dirtySeal, SupportInfo.ScrambleKey) is null,
+            "non-numeric account number is dropped (section stays hidden)");
+
+        // A valid payload with a good seal round-trips.
+        var cleanPlain = "Lunara\nAccess Bank|1698996910";
+        var cleanBytes = System.Text.Encoding.UTF8.GetBytes(cleanPlain);
+        var cleanScrambled = new byte[cleanBytes.Length];
+        for (var i = 0; i < cleanBytes.Length; i++)
+            cleanScrambled[i] = (byte)(cleanBytes[i] ^ keyBytes[i % keyBytes.Length]);
+        var cleanSeal = Convert.ToBase64String(sha.ComputeHash(cleanBytes));
+        var roundTrip = SupportInfo.Decode(Convert.ToBase64String(cleanScrambled), cleanSeal, SupportInfo.ScrambleKey);
+        Check(roundTrip is not null, "well-formed payload with matching seal round-trips");
+        Eq("1698996910", roundTrip?.Banks.Count > 0 ? roundTrip.Banks[0].Number : "",
+            "round-trip keeps the account number");
+    }
 
     /// <summary>Walks up from the test binary until it finds the app's Models folder.</summary>
     private static string? FindModelsDirectory()

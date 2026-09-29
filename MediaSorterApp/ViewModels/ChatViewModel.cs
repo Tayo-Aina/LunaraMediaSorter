@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
+using MediaSorter.Engine;
 using Microsoft.Win32;
 
 namespace MediaSorter.ViewModels;
@@ -20,6 +21,13 @@ public sealed class ChatViewModel : INotifyPropertyChanged
     private bool _moveFiles = true;
     private bool _includeSubfolders = true;
     private bool _cancelEnabled;
+    private bool _showSupport;
+
+    /// <summary>
+    /// Verified support details, or null when the payload failed its integrity
+    /// check (tampered build). Null hides the section everywhere.
+    /// </summary>
+    private readonly SupportData? _support = SupportInfo.Load();
 
     public ChatViewModel()
     {
@@ -38,6 +46,28 @@ public sealed class ChatViewModel : INotifyPropertyChanged
 
     /// <summary>Persistent "Cancel run" button in the input row (same as /cancel).</summary>
     public ICommand CancelCommand { get; }
+
+    /// <summary>True when the support details passed their integrity check.</summary>
+    public bool HasSupport => _support is not null;
+
+    /// <summary>Account name shown in the support section ("" when unavailable).</summary>
+    public string SupportAccountName => _support?.AccountName ?? "";
+
+    /// <summary>Bank rows shown in the support section (empty when unavailable).</summary>
+    public IReadOnlyList<SupportBank> SupportBanks => _support?.Banks ?? Array.Empty<SupportBank>();
+
+    /// <summary>Open state of the support section; forced closed on a tampered build.</summary>
+    public bool ShowSupport
+    {
+        get => _showSupport;
+        set
+        {
+            if (!HasSupport)
+                value = false;
+
+            Set(ref _showSupport, value);
+        }
+    }
 
     /// <summary>True while a run is in progress — lights up the persistent cancel button.</summary>
     public bool CancelEnabled

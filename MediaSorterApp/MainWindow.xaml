@@ -16,6 +16,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -54,6 +55,12 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
+                    <ToggleButton Content="Support"
+                                  IsChecked="{Binding ShowSupport}"
+                                  Style="{StaticResource ChipToggle}"
+                                  Margin="0,0,16,0"
+                                  VerticalAlignment="Center"
+                                  ToolTip="Show the support section (thanks for thinking of us)" />
                     <TextBlock Text="Mode"
                                FontSize="12"
                                Foreground="{StaticResource MutedBrush}"
@@ -74,9 +81,79 @@
             </DockPanel>
         </Border>
 
+        <!-- =============================== support ============================= -->
+        <!-- Opens from the "Support" toggle in the header. The account details are
+             verified at load time (see Engine/SupportInfo.cs); a tampered build
+             shows nothing here because the panel is bound to ShowSupport, which
+             stays false whenever verification fails. -->
+        <Border Grid.Row="1"
+                Margin="18,0,18,10"
+                Padding="14,12"
+                Background="{StaticResource SurfaceBrush}"
+                BorderBrush="{StaticResource LineBrush}"
+                BorderThickness="1"
+                CornerRadius="0"
+                Visibility="{Binding ShowSupport, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <TextBlock Text="Support the devs"
+                           FontSize="13.5"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextBrush}" />
+                <TextBlock Text="Media Sorter is free and stays free. If it saved you some time, you can say thanks with a small donation to Lunara, the team behind this app."
+                           FontSize="12.5"
+                           Margin="0,5,0,0"
+                           TextWrapping="Wrap"
+                           Foreground="{StaticResource MutedBrush}" />
+                <TextBlock FontSize="12.5"
+                           Margin="0,9,0,0"
+                           Foreground="{StaticResource MutedBrush}">
+                    <Run Text="Account name: " /><Run Text="{Binding SupportAccountName, Mode=OneWay}" Foreground="{StaticResource TextBrush}" />
+                </TextBlock>
+                <ItemsControl ItemsSource="{Binding SupportBanks}" Margin="0,7,0,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{StaticResource InputBrush}"
+                                    BorderBrush="{StaticResource LineBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="0"
+                                    Padding="10,6"
+                                    Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Bank}"
+                                               FontSize="12.5"
+                                               VerticalAlignment="Center"
+                                               Foreground="{StaticResource MutedBrush}" />
+                                    <TextBlock Text="{Binding Number}"
+                                               FontSize="12.5"
+                                               FontWeight="SemiBold"
+                                               Margin="10,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextBrush}" />
+                                    <Button Content="Copy number"
+                                            Tag="{Binding Number}"
+                                            Click="OnCopyAccountNumber"
+                                            Style="{StaticResource GhostButton}"
+                                            FontSize="11.5"
+                                            Padding="9,3"
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center"
+                                            ToolTip="Copy this account number to the clipboard" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+
         <!-- =============================== transcript ============================= -->
         <ListBox x:Name="ChatList"
-                 Grid.Row="1"
+                 Grid.Row="2"
                  ItemsSource="{Binding Messages}"
                  Background="Transparent"
                  BorderThickness="0"
@@ -108,7 +185,7 @@
         </ListBox>
 
         <!-- ================================ progress ============================= -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="3"
                 Margin="18,0,18,10"
                 Padding="14,10"
                 Background="{StaticResource SurfaceBrush}"
@@ -145,7 +222,7 @@
         </Border>
 
         <!-- ================================= input =============================== -->
-        <Border Grid.Row="3"
+        <Border Grid.Row="4"
                 Background="{StaticResource SurfaceBrush}"
                 BorderBrush="{StaticResource LineBrush}"
                 BorderThickness="0,1,0,0"
