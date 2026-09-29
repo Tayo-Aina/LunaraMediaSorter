@@ -6,11 +6,8 @@ namespace MediaSorter.Engine;
 /// <summary>One bank row of the support section.</summary>
 public sealed record SupportBank(string Bank, string Number);
 
-/// <summary>The support details shown by the in-app support section.</summary>
-public sealed record SupportData(string AccountName, IReadOnlyList<SupportBank> Banks);
-
 /// <summary>
-/// Loads the support details (account name and bank account numbers).
+/// Loads the support details (bank account numbers) for the support section.
 ///
 /// The real text is never stored in plain form, neither in the binary nor in the
 /// source. It is scrambled with a repeating XOR key and sealed with a SHA-256
@@ -24,18 +21,18 @@ public static class SupportInfo
 {
     /// <summary>Scrambled details: Base64 of the XOR'd UTF-8 text.</summary>
     internal const string Payload =
-        "ARAKCBMyZSIGCgRHFwADUC0TGkUKBxt8QFZZS1h0XG4oAjAKAQdFME8dHgxBWUtMF08HF31F";
+        "HRcLHwg3GgFUJxNAGAlGRV9HTBZPCHRcbigCMAoBB0UwTx0eDEFZS0wXTwd0VFQ=";
 
     /// <summary>SHA-256 of the clear text, Base64 encoded. Fails closed when tampered.</summary>
-    internal const string Seal = "3iCW6+U5yZY5lCA/63DFKrH3+bVCenaDbtrt7iPntOA=";
+    internal const string Seal = "HeDyesb2yZFi3AX5shx1cZemPfbqj0Nop2cUwXYDWl4=";
 
-    internal const string ScrambleKey = "MediaSorter.support.v1.Lunara";
+    internal const string ScrambleKey = "MediaSorter.support.v1";
 
-    /// <summary>Decoded details, or null when the payload fails verification.</summary>
-    public static SupportData? Load() => Decode(Payload, Seal, ScrambleKey);
+    /// <summary>Bank rows, or null when the payload fails verification.</summary>
+    public static IReadOnlyList<SupportBank>? Load() => Decode(Payload, Seal, ScrambleKey);
 
     /// <summary>Decode and verify an arbitrary payload. Returns null on any failure.</summary>
-    public static SupportData? Decode(string payload, string seal, string key)
+    public static IReadOnlyList<SupportBank>? Decode(string payload, string seal, string key)
     {
         try
         {
@@ -64,23 +61,16 @@ public static class SupportInfo
     }
 
     /// <summary>
-    /// Clear text layout: line 1 is the account name, every following line is
-    /// "Bank name|account number". Rows that don't look like a real account
-    /// number are dropped rather than shown.
+    /// Clear text layout: one "Bank name|account number" per line. Rows that
+    /// don't look like a real account number are dropped rather than shown.
     /// </summary>
-    private static SupportData? Parse(string text)
+    private static IReadOnlyList<SupportBank>? Parse(string text)
     {
-        var lines = text.Split('\n');
-
-        var name = lines.Length > 0 ? lines[0].Trim() : "";
-        if (name.Length == 0)
-            return null;
-
         var banks = new List<SupportBank>();
 
-        for (var i = 1; i < lines.Length; i++)
+        foreach (var line in text.Split('\n'))
         {
-            var parts = lines[i].Split('|', 2);
+            var parts = line.Split('|', 2);
             if (parts.Length != 2)
                 continue;
 
@@ -93,7 +83,7 @@ public static class SupportInfo
             banks.Add(new SupportBank(bank, number));
         }
 
-        return banks.Count == 0 ? null : new SupportData(name, banks);
+        return banks.Count == 0 ? null : banks;
     }
 
     private static bool IsAccountNumber(string value)

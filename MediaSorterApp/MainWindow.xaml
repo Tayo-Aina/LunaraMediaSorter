@@ -99,17 +99,12 @@
                            FontSize="13.5"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}" />
-                <TextBlock Text="Media Sorter is free and stays free. If it saved you some time, you can say thanks with a small donation to Lunara, the team behind this app."
+                <TextBlock Text="Media Sorter is free and stays free. If it saved you some time, you can say thanks with a small donation to the team behind this app."
                            FontSize="12.5"
                            Margin="0,5,0,0"
                            TextWrapping="Wrap"
                            Foreground="{StaticResource MutedBrush}" />
-                <TextBlock FontSize="12.5"
-                           Margin="0,9,0,0"
-                           Foreground="{StaticResource MutedBrush}">
-                    <Run Text="Account name: " /><Run Text="{Binding SupportAccountName, Mode=OneWay}" Foreground="{StaticResource TextBrush}" />
-                </TextBlock>
-                <ItemsControl ItemsSource="{Binding SupportBanks}" Margin="0,7,0,0">
+                <ItemsControl ItemsSource="{Binding SupportBanks}" Margin="0,9,0,0">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel />
