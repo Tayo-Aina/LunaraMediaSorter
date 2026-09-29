@@ -12,7 +12,7 @@
     <Product>Media Sorter</Product>
     <AssemblyTitle>Media Sorter</AssemblyTitle>
     <ApplicationIcon>MediaSorterApp.ico</ApplicationIcon>
-    <Version>2.0.0</Version>
+    <Version>1.0.0-beta.1</Version>
     <Description>Chat-driven desktop organizer that files video downloads into show / season folders.</Description>
 
     <!-- Keep the published output small: only English satellite resources. -->
