@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    The Microsoft.ML.OnnxRuntime package ships native libraries for every platform it
+    supports (android, ios, linux, osx, win-arm64, win-x64 — ~230 MB together). This app
+    only ever loads the win-x64 copy, so drop the foreign RID folders from the local build
+    output right after each build to keep bin/ small (~215 MB saved per build).
+
+    Publish output is unaffected: `dotnet publish -r win-x64` assembles its output from the
+    package assets for win-x64 only, and never reads these folders back out of OutDir.
+    If the build ever runs on a non-x64 host, the kept folder would need to match that RID.
+  -->
+  <Target Name="DropForeignNativeRuntimes" AfterTargets="Build" Condition="'$(TargetDir)' != ''">
+    <PropertyGroup>
+      <_RuntimesDir>$(TargetDir)runtimes</_RuntimesDir>
+    </PropertyGroup>
+    <ItemGroup Condition="Exists('$(_RuntimesDir)')">
+      <_ForeignRidDir Include="$([System.IO.Directory]::GetDirectories('$(_RuntimesDir)'))"
+                      Exclude="$(_RuntimesDir)\win-x64" />
+    </ItemGroup>
+    <RemoveDir Directories="@(_ForeignRidDir)" />
+  </Target>
+
+</Project>

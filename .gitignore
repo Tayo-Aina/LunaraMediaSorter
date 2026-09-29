@@ -1,0 +1,30 @@
+# .NET build outputs
+bin/
+obj/
+
+# Local test scratch data (created by the E2E run)
+.scratch/
+
+# Published app (lives at the repository root: exe + Models + native DLLs)
+/MediaSorterApp.exe
+/MediaSorterApp.pdb
+/Models/
+/*.dll
+/*.lib
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+
+# IDE files
+.idea/
+.vs/
+.vscode/
+*.sln.docstates
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
