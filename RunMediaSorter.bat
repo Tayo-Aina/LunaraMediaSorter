@@ -1,6 +1,6 @@
 @echo off
-title Media Sorter
-echo Starting Media Sorter...
+title Lunara Media Sorter
+echo Starting Lunara Media Sorter...
 cd /d "%~dp0MediaSorterApp"
 dotnet run
 pause

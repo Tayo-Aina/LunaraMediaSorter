@@ -18,7 +18,7 @@ public partial class App : Application
 
         MessageBox.Show(
             $"Something went wrong:\n\n{e.Exception.Message}",
-            "Media Sorter",
+            "Lunara Media Sorter",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
     }

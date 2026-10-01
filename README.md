@@ -1,4 +1,4 @@
-# Media Sorter
+# Lunara Media Sorter
 
 A chat-based Windows desktop app that turns a messy downloads folder into tidy show folders:
 
@@ -115,7 +115,7 @@ and must travel with it: copy them together with the exe.)
 ## Project Structure
 
 ```
-MediaSorter/
+LunaraMediaSorter/
 ├── RunMediaSorter.bat              # Run the app from source
 ├── PublishSelfContained.bat        # Publish the self-contained app into this folder
 ├── MediaSorterApp.exe        # Published app (self-contained, runtime bundled)

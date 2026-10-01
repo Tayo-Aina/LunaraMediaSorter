@@ -1,6 +1,6 @@
 # MediaSorterApp Source Code
 
-The Media Sorter desktop app: a WPF (Windows-only) chat UI on .NET 9 that organizes
+The Lunara Media Sorter desktop app: a WPF (Windows-only) chat UI on .NET 9 that organizes
 video files into `Show Name / Season 01 / Show Name - S01E01.mkv` folders.
 
 The code is split into a UI-free **Engine** (all the file logic) and a **ViewModels** layer

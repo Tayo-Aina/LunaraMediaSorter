@@ -9,10 +9,10 @@
 
     <AssemblyName>MediaSorterApp</AssemblyName>
     <RootNamespace>MediaSorter</RootNamespace>
-    <Product>Media Sorter</Product>
-    <AssemblyTitle>Media Sorter</AssemblyTitle>
+    <Product>Lunara Media Sorter</Product>
+    <AssemblyTitle>Lunara Media Sorter</AssemblyTitle>
     <ApplicationIcon>MediaSorterApp.ico</ApplicationIcon>
-    <Version>1.0.0-beta.2</Version>
+    <Version>1.0.0-beta.3</Version>
     <Description>Chat-driven desktop organizer that files video downloads into show / season folders.</Description>
 
     <!-- Keep the published output small: only English satellite resources. -->

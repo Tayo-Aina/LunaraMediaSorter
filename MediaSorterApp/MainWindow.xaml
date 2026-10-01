@@ -2,7 +2,7 @@
         x:ClassModifier="public"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Media Sorter"
+        Title="Lunara Media Sorter"
         Width="1040" Height="760"
         MinWidth="760" MinHeight="540"
         Background="{StaticResource BgBrush}"
@@ -95,11 +95,11 @@
                 CornerRadius="0"
                 Visibility="{Binding ShowSupport, Converter={StaticResource BoolToVis}}">
             <StackPanel>
-                <TextBlock Text="Support the devs"
+                <TextBlock Text="Support the devs at Lunara"
                            FontSize="13.5"
                            FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}" />
-                <TextBlock Text="Media Sorter is free and stays free. If it saved you some time, you can say thanks with a small donation to the team behind this app."
+                <TextBlock Text="Lunara Media Sorter is free and stays free. If it saved you some time, you can say thanks with a small donation to the team behind this app."
                            FontSize="12.5"
                            Margin="0,5,0,0"
                            TextWrapping="Wrap"
