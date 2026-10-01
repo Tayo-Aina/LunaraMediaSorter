@@ -143,6 +143,35 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <Border Background="{StaticResource InputBrush}"
+                        BorderBrush="{StaticResource LineBrush}"
+                        BorderThickness="1"
+                        CornerRadius="0"
+                        Padding="10,6"
+                        Margin="0,8,0,0"
+                        Visibility="{Binding HasSupportRepo, Converter={StaticResource BoolToVis}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Source code"
+                                   FontSize="12.5"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource MutedBrush}" />
+                        <TextBlock Text="{Binding SupportRepoUrl, Mode=OneWay}"
+                                   FontSize="12.5"
+                                   FontWeight="SemiBold"
+                                   Margin="10,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource TextBrush}" />
+                        <Button Content="Open"
+                                Tag="{Binding SupportRepoUrl, Mode=OneWay}"
+                                Click="OnOpenRepository"
+                                Style="{StaticResource GhostButton}"
+                                FontSize="11.5"
+                                Padding="9,3"
+                                Margin="10,0,0,0"
+                                VerticalAlignment="Center"
+                                ToolTip="Open the project repository in your browser" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
 

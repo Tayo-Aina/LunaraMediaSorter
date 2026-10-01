@@ -616,17 +616,21 @@ internal static class Program
         if (data is null)
             return;
 
-        Eq(2, data.Count, "both banks are present");
+        Eq(2, data.Banks.Count, "both banks are present");
 
-        var byBank = data.ToDictionary(b => b.Bank, b => b.Number);
+        var byBank = data.Banks.ToDictionary(b => b.Bank, b => b.Number);
         Check(byBank.ContainsKey("Providus Bank") && byBank.ContainsKey("Access Bank"),
             "banks are Providus and Access", string.Join(", ", byBank.Keys));
         Eq("6505889999", byBank.GetValueOrDefault("Providus Bank", ""), "Providus account number");
         Eq("1698996910", byBank.GetValueOrDefault("Access Bank", ""), "Access account number");
 
-        foreach (var bank in data)
+        foreach (var bank in data.Banks)
             Check(bank.Number.Length is 10 or 11 && bank.Number.All(char.IsDigit),
                 $"{bank.Bank} number looks like an account number", bank.Number);
+
+        // The sealed source link points at our repository over plain https.
+        Eq("https://github.com/Tayo-Aina/LunaraMediaSorter", data.RepoUrl ?? "",
+            "repo link is the project repository");
 
         // Tampered payload: one character flipped in the base64 blob must fail the seal.
         var payload = SupportInfo.Payload;
@@ -635,15 +639,9 @@ internal static class Program
             "tampered payload fails the seal");
 
         // Attacker swaps in their own payload: without the right seal it is rejected.
-        var attackerPlain = "Evil Bank|9999999999";
-        var attackerBytes = System.Text.Encoding.UTF8.GetBytes(attackerPlain);
         var keyBytes = System.Text.Encoding.UTF8.GetBytes(SupportInfo.ScrambleKey);
-        var attackerScrambled = new byte[attackerBytes.Length];
-        for (var i = 0; i < attackerBytes.Length; i++)
-            attackerScrambled[i] = (byte)(attackerBytes[i] ^ keyBytes[i % keyBytes.Length]);
-        var attackerPayload = Convert.ToBase64String(attackerScrambled);
-
-        Check(SupportInfo.Decode(attackerPayload, SupportInfo.Seal, SupportInfo.ScrambleKey) is null,
+        var attackerPayload = SealPayload("Evil Bank|9999999999", keyBytes);
+        Check(SupportInfo.Decode(attackerPayload.Payload, SupportInfo.Seal, SupportInfo.ScrambleKey) is null,
             "attacker's own account number is rejected against the real seal");
 
         // Right payload, wrong seal: also rejected.
@@ -659,27 +657,50 @@ internal static class Program
             "malformed payload fails closed");
 
         // An account-shaped number with letters in it is dropped rather than shown.
-        var dirtyPlain = "Providus Bank|65058899xx";
-        var dirtyBytes = System.Text.Encoding.UTF8.GetBytes(dirtyPlain);
-        var dirtyScrambled = new byte[dirtyBytes.Length];
-        for (var i = 0; i < dirtyBytes.Length; i++)
-            dirtyScrambled[i] = (byte)(dirtyBytes[i] ^ keyBytes[i % keyBytes.Length]);
-        using var sha = System.Security.Cryptography.SHA256.Create();
-        var dirtySeal = Convert.ToBase64String(sha.ComputeHash(dirtyBytes));
-        Check(SupportInfo.Decode(Convert.ToBase64String(dirtyScrambled), dirtySeal, SupportInfo.ScrambleKey) is null,
+        var dirty = SealPayload("Providus Bank|65058899xx", keyBytes);
+        Check(SupportInfo.Decode(dirty.Payload, dirty.Seal, SupportInfo.ScrambleKey) is null,
             "non-numeric account number is dropped (section stays hidden)");
 
         // A valid payload with a good seal round-trips.
-        var cleanPlain = "Access Bank|1698996910";
-        var cleanBytes = System.Text.Encoding.UTF8.GetBytes(cleanPlain);
-        var cleanScrambled = new byte[cleanBytes.Length];
-        for (var i = 0; i < cleanBytes.Length; i++)
-            cleanScrambled[i] = (byte)(cleanBytes[i] ^ keyBytes[i % keyBytes.Length]);
-        var cleanSeal = Convert.ToBase64String(sha.ComputeHash(cleanBytes));
-        var roundTrip = SupportInfo.Decode(Convert.ToBase64String(cleanScrambled), cleanSeal, SupportInfo.ScrambleKey);
+        var clean = SealPayload("Access Bank|1698996910", keyBytes);
+        var roundTrip = SupportInfo.Decode(clean.Payload, clean.Seal, SupportInfo.ScrambleKey);
         Check(roundTrip is not null, "well-formed payload with matching seal round-trips");
-        Eq("1698996910", roundTrip?.Count > 0 ? roundTrip[0].Number : "",
+        Eq("1698996910", roundTrip?.Banks.Count > 0 ? roundTrip.Banks[0].Number : "",
             "round-trip keeps the account number");
+        Eq("", roundTrip?.RepoUrl ?? "", "payload without a repo line carries no link");
+
+        // Even a payload that passes its own seal cannot point the link elsewhere:
+        // the repo path is checked again in code, not just by the checksum.
+        var evilRepo = SealPayload(
+            "Evil Bank|9999999999\nrepo|https://github.com/attacker/backdoored-build", keyBytes);
+        Check(SupportInfo.Decode(evilRepo.Payload, evilRepo.Seal, SupportInfo.ScrambleKey) is null,
+            "attacker's own repo link hides the whole section");
+
+        // Same for a non-github host wearing an https cloak.
+        var evilHost = SealPayload(
+            "Access Bank|1698996910\nrepo|https://github.com.evil.example/Tayo-Aina/LunaraMediaSorter", keyBytes);
+        Check(SupportInfo.Decode(evilHost.Payload, evilHost.Seal, SupportInfo.ScrambleKey) is null,
+            "lookalike host is rejected");
+
+        // A trusted link with a trailing slash still counts as ours.
+        var trailing = SealPayload(
+            "Access Bank|1698996910\nrepo|https://github.com/Tayo-Aina/LunaraMediaSorter/", keyBytes);
+        var trailingResult = SupportInfo.Decode(trailing.Payload, trailing.Seal, SupportInfo.ScrambleKey);
+        Check(trailingResult is not null, "trailing slash on our own link is accepted");
+        Eq("https://github.com/Tayo-Aina/LunaraMediaSorter/", trailingResult?.RepoUrl ?? "",
+            "accepted link is passed through verbatim");
+    }
+
+    /// <summary>Scramble a clear-text payload with the given key and seal it with SHA-256.</summary>
+    private static (string Payload, string Seal) SealPayload(string plain, byte[] keyBytes)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(plain);
+        var scrambled = new byte[bytes.Length];
+        for (var i = 0; i < bytes.Length; i++)
+            scrambled[i] = (byte)(bytes[i] ^ keyBytes[i % keyBytes.Length]);
+
+        using var sha = System.Security.Cryptography.SHA256.Create();
+        return (Convert.ToBase64String(scrambled), Convert.ToBase64String(sha.ComputeHash(bytes)));
     }
 
     /// <summary>Walks up from the test binary until it finds the app's Models folder.</summary>

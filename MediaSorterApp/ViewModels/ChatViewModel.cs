@@ -24,10 +24,10 @@ public sealed class ChatViewModel : INotifyPropertyChanged
     private bool _showSupport;
 
     /// <summary>
-    /// Verified bank rows, or null when the payload failed its integrity
+    /// Verified support details, or null when the payload failed its integrity
     /// check (tampered build). Null hides the section everywhere.
     /// </summary>
-    private readonly IReadOnlyList<SupportBank>? _support = SupportInfo.Load();
+    private readonly SupportData? _support = SupportInfo.Load();
 
     public ChatViewModel()
     {
@@ -51,7 +51,13 @@ public sealed class ChatViewModel : INotifyPropertyChanged
     public bool HasSupport => _support is not null;
 
     /// <summary>Bank rows shown in the support section (empty when unavailable).</summary>
-    public IReadOnlyList<SupportBank> SupportBanks => _support ?? Array.Empty<SupportBank>();
+    public IReadOnlyList<SupportBank> SupportBanks => _support?.Banks ?? Array.Empty<SupportBank>();
+
+    /// <summary>Sealed source repository link ("" when unavailable).</summary>
+    public string SupportRepoUrl => _support?.RepoUrl ?? "";
+
+    /// <summary>True when there is a source link to show (drives the link row's visibility).</summary>
+    public bool HasSupportRepo => _support?.RepoUrl is not null;
 
     /// <summary>Open state of the support section; forced closed on a tampered build.</summary>
     public bool ShowSupport

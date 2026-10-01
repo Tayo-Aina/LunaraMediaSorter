@@ -179,6 +179,36 @@ public partial class MainWindow : Window
         timer.Start();
     }
 
+    /// <summary>Open button inside the support section (opens the sealed source link).</summary>
+    private void OnOpenRepository(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not string url || url.Length == 0)
+            return;
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url)
+            {
+                UseShellExecute = true
+            });
+        }
+        catch
+        {
+            // No browser registered, or the machine blocks it: nothing useful to tell the user.
+            return;
+        }
+
+        // Brief "Opened" confirmation on the button itself.
+        button.Content = "Opened";
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.6) };
+        timer.Tick += (_, _) =>
+        {
+            button.Content = "Open";
+            timer.Stop();
+        };
+        timer.Start();
+    }
+
     // ------------------------------------------------------------- drag & drop
 
     private void OnDragOver(object sender, DragEventArgs e)

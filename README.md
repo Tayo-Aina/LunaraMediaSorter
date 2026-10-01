@@ -1,5 +1,7 @@
 # Lunara Media Sorter
 
+Source code: https://github.com/Tayo-Aina/LunaraMediaSorter
+
 A chat-based Windows desktop app that turns a messy downloads folder into tidy show folders:
 
 ```
