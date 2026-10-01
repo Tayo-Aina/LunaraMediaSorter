@@ -55,7 +55,7 @@
                             Orientation="Horizontal"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-                    <ToggleButton Content="Support"
+                    <ToggleButton Content="Support us"
                                   IsChecked="{Binding ShowSupport}"
                                   Style="{StaticResource ChipToggle}"
                                   Margin="0,0,16,0"
